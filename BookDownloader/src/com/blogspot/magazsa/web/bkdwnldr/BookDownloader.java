@@ -22,9 +22,14 @@ import java.net.URL;
 public class BookDownloader {
 
 	private static final String PATH = "http://www.many-books.org";
-
+	
 	public BookDownloader() {}
 	
+	/**
+	 * Downloads and saves file from remote url
+	 * @param url
+	 * @param file
+	 */
 	public void download(URL url, File file) {
 		BufferedInputStream in = null;
 		FileOutputStream out = null;
