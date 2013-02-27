@@ -23,6 +23,8 @@ public class BookDownloader {
 
 	private static final String PATH = "http://www.many-books.org";
 
+	public BookDownloader() {}
+	
 	public void download(URL url, File file) {
 		BufferedInputStream in = null;
 		FileOutputStream out = null;
