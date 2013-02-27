@@ -7,6 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,5 +103,42 @@ public class BookDownloader {
 			}
 		}
 		return null;
+	}
+	
+	public List<String> getAuthorsByName(String name) {
+		String link = getLinkByFirstLetter(String.valueOf(name.charAt(0)));
+		System.out.println(link);
+		StringBuilder nameBuilder = new StringBuilder();
+		nameBuilder.append(name.substring(0, 1).toUpperCase()).append(name.substring(1).toLowerCase());
+		name = nameBuilder.toString().trim();
+		Pattern pattern = Pattern
+				.compile("(?m)(?i)(?u)(?s).*<a\\s+href\\s*=\\s*\"(.+?)\"\\s*>"
+						+ name + ".+?");
+		BufferedReader reader = null;
+		List<String> authors = new ArrayList<>();
+		try {
+			reader = new BufferedReader(new InputStreamReader(
+					new URL(link).openStream()));
+			String line;
+			Matcher m;
+			while ((line = reader.readLine()) != null) {
+				m = pattern.matcher(line);
+				if (m.matches()) {
+					authors.add(m.group(1));
+				}
+			}
+			return authors;
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return Collections.EMPTY_LIST;
 	}
 }
