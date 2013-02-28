@@ -1,17 +1,16 @@
 package com.blogspot.magazsa.web.bkdwnldr;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.TimeUnit;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -35,10 +34,12 @@ public class BookDownloader {
 	private static final String DOWNLOAD_PATH = PATH + "/download";
 
 	private String downloadsDir = "/Downloads";
+	
+	private static final int TIMEOUT = 5000;
 
 	public BookDownloader() {
 	}
-
+	
 	/**
 	 * Downloads and saves file from remote url
 	 * 
@@ -83,7 +84,7 @@ public class BookDownloader {
 	public String getLinkByFirstLetter(String letter) {
 		Document page;
 		Connection con = Jsoup.connect(PATH);
-		con.timeout(6000);
+		con.timeout(TIMEOUT);
 		try {
 			page = con.get();
 			Elements links = page.select("a[href*=alpha]");
@@ -98,48 +99,56 @@ public class BookDownloader {
 		return null;
 	}
 	
-	public Map<String, String> getAuthorsByName(String name) {
+	public List<Author> getAuthorsByName(String name) {
 		String firstLetterLink = getLinkByFirstLetter(String.valueOf(name.charAt(0)));
 		StringBuilder nameBuilder = new StringBuilder();
 		nameBuilder.append(name.substring(0, 1).toUpperCase()).append(name.substring(1).toLowerCase());
 		name = nameBuilder.toString().trim();
-		Map<String, String> authors = new HashMap<>();
+		List<Author> authors = new ArrayList<>();
 		Document page;
-		Connection con = Jsoup.connect(PATH + firstLetterLink);
-		con.timeout(6000);
+		Connection connection = Jsoup.connect(PATH + firstLetterLink);
+		connection.timeout(TIMEOUT);
 		try {
-			page = con.get();
+			page = connection.get();
 			Elements links = page.select("a[href*=auth]");
 			for (Element link : links) {
 				String linkText = link.text();
-				if (linkText.indexOf(name) != -1) {
-					authors.put(linkText, link.attr("href"));
+				if (linkText.startsWith(name)) {
+					String href = link.attr("href");
+					String[] tokens = href.split("/");
+					String id = tokens[2];
+					String asciiName = tokens[3];
+					Author author = new Author(id, linkText, asciiName, href);
+					authors.add(author);
 				}
 			}
 			return authors;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return Collections.emptyMap();
+		return Collections.emptyList();
 	}
 	
-	public Map<String, String> getBookLinksByAuthor(String authorLink) {
-		Map<String, String> books = new HashMap<>();
+	public List<Book> getBooksByAuthor(Author author) {
+		List<Book> books = new ArrayList<>();
 		Document page;
-		Connection con = Jsoup.connect(PATH + authorLink);
-		con.timeout(6000);
+		Connection con = Jsoup.connect(PATH + author.getLink());
+		con.timeout(TIMEOUT);
 		try {
-			System.out.println(PATH + authorLink);
 			page = con.get();
-			Elements links = page.select("a[href*=auth]");
+			Elements links = page.select("a[href*=auth/" + author.getId() +"]");
 			for (Element link : links) {
-				System.out.println(link);
-				books.put(link.text(), link.attr("href"));
+				String title = link.text();
+				String[] tokens = link.attr("href").split("/");
+				String id = tokens[4];
+				String asciiTitle = tokens[6];
+				Book book = new Book(id, title, asciiTitle);
+				books.add(book);
 			}
 			return books;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return Collections.emptyMap();
+		return Collections.emptyList();
 	}
 }
