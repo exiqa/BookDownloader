@@ -7,10 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -31,27 +28,30 @@ import org.jsoup.select.Elements;
 public class BookDownloader {
 
 	private static final String PATH = "http://www.many-books.org";
-	private static final String DOWNLOAD_PATH = PATH + "/download";
+	private static final String DOWNLOAD_PATH = PATH + "/download/";
 
-	private String downloadsDir = "/Downloads";
-	
-	private static final int TIMEOUT = 5000;
+	private String downloadsDir = "Downloads/";
+
+	private static final int TIMEOUT = 5000; // 5 seconds
 
 	public BookDownloader() {
 	}
-	
+
 	/**
-	 * Downloads and saves file from remote url
+	 * Downloads and saves book from remote url
 	 * 
-	 * @param url
-	 * @param file
+	 * @param book
+	 *            - book to be downloaded
 	 */
-	public void download(URL url, File file) {
+	public void download(Book book) {
 		BufferedInputStream in = null;
 		FileOutputStream out = null;
+		URL url;
 		try {
+			url = new URL(DOWNLOAD_PATH + book.getId());
 			in = new BufferedInputStream(url.openStream());
-			out = new FileOutputStream(file);
+			out = new FileOutputStream(new File(downloadsDir
+					+ book.getAsciiTitle() + ".zip"));
 			byte[] buffer = new byte[1024];
 			int count = 0;
 			while ((count = in.read(buffer, 0, 1024)) != -1) {
@@ -77,16 +77,30 @@ public class BookDownloader {
 		}
 	}
 
+	/**
+	 * Sets the directory to store downloaded books
+	 * 
+	 * @param downloadsDir
+	 *            - directory name
+	 */
 	public void setDownloadsDir(String downloadsDir) {
 		this.downloadsDir = downloadsDir;
 	}
 
+	/**
+	 * Returns the link to page with authors, whose names starts with given
+	 * letter
+	 * 
+	 * @param letter
+	 *            - first letter of the author's name
+	 * @return - link to page with authors
+	 */
 	public String getLinkByFirstLetter(String letter) {
 		Document page;
-		Connection con = Jsoup.connect(PATH);
-		con.timeout(TIMEOUT);
+		Connection connection = Jsoup.connect(PATH);
+		connection.timeout(TIMEOUT);
 		try {
-			page = con.get();
+			page = connection.get();
 			Elements links = page.select("a[href*=alpha]");
 			for (Element link : links) {
 				if (letter.equalsIgnoreCase(link.text())) {
@@ -99,10 +113,18 @@ public class BookDownloader {
 		return null;
 	}
 	
+	/**
+	 * Returns a list of authors whose names match the given name
+	 * 
+	 * @param name - given name
+	 * @return - list of found authors  
+	 */
 	public List<Author> getAuthorsByName(String name) {
-		String firstLetterLink = getLinkByFirstLetter(String.valueOf(name.charAt(0)));
+		String firstLetterLink = getLinkByFirstLetter(String.valueOf(name
+				.charAt(0)));
 		StringBuilder nameBuilder = new StringBuilder();
-		nameBuilder.append(name.substring(0, 1).toUpperCase()).append(name.substring(1).toLowerCase());
+		nameBuilder.append(name.substring(0, 1).toUpperCase()).append(
+				name.substring(1).toLowerCase());
 		name = nameBuilder.toString().trim();
 		List<Author> authors = new ArrayList<>();
 		Document page;
@@ -129,14 +151,21 @@ public class BookDownloader {
 		return Collections.emptyList();
 	}
 	
+	/**
+	 * Returns a list of all the books by given author
+	 * 
+	 * @param author - author, whose books should be found
+	 * @return - list of all found books 
+	 */
 	public List<Book> getBooksByAuthor(Author author) {
 		List<Book> books = new ArrayList<>();
 		Document page;
-		Connection con = Jsoup.connect(PATH + author.getLink());
-		con.timeout(TIMEOUT);
+		Connection connection = Jsoup.connect(PATH + author.getLink());
+		connection.timeout(TIMEOUT);
 		try {
-			page = con.get();
-			Elements links = page.select("a[href*=auth/" + author.getId() +"]");
+			page = connection.get();
+			Elements links = page
+					.select("a[href*=auth/" + author.getId() + "]");
 			for (Element link : links) {
 				String title = link.text();
 				String[] tokens = link.attr("href").split("/");
@@ -151,4 +180,5 @@ public class BookDownloader {
 		}
 		return Collections.emptyList();
 	}
+	
 }
