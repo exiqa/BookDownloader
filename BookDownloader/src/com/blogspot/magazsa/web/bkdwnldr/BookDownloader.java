@@ -7,12 +7,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * This program provides easy way to download books from http://many-books.org
@@ -76,69 +81,65 @@ public class BookDownloader {
 	}
 
 	public String getLinkByFirstLetter(String letter) {
-		Pattern pattern = Pattern
-				.compile("(?m)(?i)(?u)(?s).*<a\\s+href\\s*=\\s*\"(.+?)\"\\s*>"
-						+ letter.toUpperCase() + "</a>.*");
-		BufferedReader reader = null;
+		Document page;
+		Connection con = Jsoup.connect(PATH);
+		con.timeout(6000);
 		try {
-			reader = new BufferedReader(new InputStreamReader(
-					new URL(PATH).openStream()));
-			String line;
-			Matcher m;
-			while ((line = reader.readLine()) != null) {
-				m = pattern.matcher(line);
-				if (m.matches()) {
-					return PATH + m.group(1);
+			page = con.get();
+			Elements links = page.select("a[href*=alpha]");
+			for (Element link : links) {
+				if (letter.equalsIgnoreCase(link.text())) {
+					return link.attr("href");
 				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
 		}
 		return null;
 	}
 	
-	public List<String> getAuthorsByName(String name) {
-		String link = getLinkByFirstLetter(String.valueOf(name.charAt(0)));
-		System.out.println(link);
+	public Map<String, String> getAuthorsByName(String name) {
+		String firstLetterLink = getLinkByFirstLetter(String.valueOf(name.charAt(0)));
 		StringBuilder nameBuilder = new StringBuilder();
 		nameBuilder.append(name.substring(0, 1).toUpperCase()).append(name.substring(1).toLowerCase());
 		name = nameBuilder.toString().trim();
-		Pattern pattern = Pattern
-				.compile("(?m)(?i)(?u)(?s).*<a\\s+href\\s*=\\s*\"(.+?)\"\\s*>"
-						+ name + ".+?");
-		BufferedReader reader = null;
-		List<String> authors = new ArrayList<>();
+		Map<String, String> authors = new HashMap<>();
+		Document page;
+		Connection con = Jsoup.connect(PATH + firstLetterLink);
+		con.timeout(6000);
 		try {
-			reader = new BufferedReader(new InputStreamReader(
-					new URL(link).openStream()));
-			String line;
-			Matcher m;
-			while ((line = reader.readLine()) != null) {
-				m = pattern.matcher(line);
-				if (m.matches()) {
-					authors.add(m.group(1));
+			page = con.get();
+			Elements links = page.select("a[href*=auth]");
+			for (Element link : links) {
+				String linkText = link.text();
+				if (linkText.indexOf(name) != -1) {
+					authors.put(linkText, link.attr("href"));
 				}
 			}
 			return authors;
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
 		}
-		return Collections.EMPTY_LIST;
+		return Collections.emptyMap();
+	}
+	
+	public Map<String, String> getBookLinksByAuthor(String authorLink) {
+		Map<String, String> books = new HashMap<>();
+		Document page;
+		Connection con = Jsoup.connect(PATH + authorLink);
+		con.timeout(6000);
+		try {
+			System.out.println(PATH + authorLink);
+			page = con.get();
+			Elements links = page.select("a[href*=auth]");
+			for (Element link : links) {
+				System.out.println(link);
+				books.put(link.text(), link.attr("href"));
+			}
+			return books;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return Collections.emptyMap();
 	}
 }
