@@ -7,6 +7,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -24,7 +25,13 @@ public class BookDownloaderGUI extends JFrame {
 
 	private static final long serialVersionUID = -1090770460719632795L;
 
-	private BookDownloader downloader = new BookDownloader();
+	// temporarily handling exception
+	private BookDownloader downloader;
+	{
+		try {
+			 downloader = new BookDownloader();
+		} catch (IOException e) {}
+	}
 
 	private List<Author> authors;
 	private List<Book> books;
@@ -91,7 +98,7 @@ public class BookDownloaderGUI extends JFrame {
 					return;
 				}
 				int[] booksIndices = booksList.getSelectedIndices();
-				if (booksIndices.length== 0) {
+				if (booksIndices.length == 0) {
 					JOptionPane.showMessageDialog(BookDownloaderGUI.this,
 							"Не выбрано ни одной книги!");
 					return;

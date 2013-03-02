@@ -30,11 +30,15 @@ public class BookDownloader {
 	private static final String PATH = "http://www.many-books.org";
 	private static final String DOWNLOAD_PATH = PATH + "/download/";
 
-	private String downloadsDir = "/Downloads/";
+	private String downloadsDirPath = "/Downloads/";
 
 	private static final int TIMEOUT = 5000; // 5 seconds
 
-	public BookDownloader() {
+	public BookDownloader() throws IOException {
+		File downloadsDir = new File("." + downloadsDirPath);
+		if (!downloadsDir.exists()) {
+			downloadsDir.createNewFile();
+		}
 	}
 
 	/**
@@ -50,7 +54,7 @@ public class BookDownloader {
 		try {
 			url = new URL(DOWNLOAD_PATH + book.getId());
 			in = new BufferedInputStream(url.openStream());
-			out = new FileOutputStream(new File(downloadsDir
+			out = new FileOutputStream(new File(downloadsDirPath
 					+ book.getAsciiTitle() + ".zip"));
 			byte[] buffer = new byte[1024];
 			int count = 0;
@@ -80,11 +84,11 @@ public class BookDownloader {
 	/**
 	 * Sets the directory to store downloaded books
 	 * 
-	 * @param downloadsDir
+	 * @param downloadsDirPath
 	 *            - directory name
 	 */
-	public void setDownloadsDir(String downloadsDir) {
-		this.downloadsDir = downloadsDir;
+	public void setDownloadsDirPath(String downloadsDirPath) {
+		this.downloadsDirPath = downloadsDirPath;
 	}
 
 	/**
