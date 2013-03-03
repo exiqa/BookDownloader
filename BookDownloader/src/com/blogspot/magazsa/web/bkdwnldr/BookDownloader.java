@@ -30,14 +30,14 @@ public class BookDownloader {
 	private static final String PATH = "http://www.many-books.org";
 	private static final String DOWNLOAD_PATH = PATH + "/download/";
 
-	private String downloadsDirPath = "/Downloads/";
+	private String downloadsDirPath = "Downloads/";
 
 	private static final int TIMEOUT = 5000; // 5 seconds
 
 	public BookDownloader() throws IOException {
-		File downloadsDir = new File("." + downloadsDirPath);
+		File downloadsDir = new File("./" + downloadsDirPath);
 		if (!downloadsDir.exists()) {
-			downloadsDir.createNewFile();
+			downloadsDir.mkdir();
 		}
 	}
 

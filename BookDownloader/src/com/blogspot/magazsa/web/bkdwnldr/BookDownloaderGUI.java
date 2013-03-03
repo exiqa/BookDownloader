@@ -29,8 +29,9 @@ public class BookDownloaderGUI extends JFrame {
 	private BookDownloader downloader;
 	{
 		try {
-			 downloader = new BookDownloader();
-		} catch (IOException e) {}
+			downloader = new BookDownloader();
+		} catch (IOException e) {
+		}
 	}
 
 	private List<Author> authors;
