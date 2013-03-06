@@ -4,11 +4,13 @@ public class Book {
 	private String id;
 	private String title;
 	private String asciiTitle;
+	private Author author;
 	
-	public Book(String id, String title, String asciiTitle) {
+	public Book(String id, String title, String asciiTitle, Author author) {
 		this.id = id;
 		this.title = title;
 		this.asciiTitle = asciiTitle;
+		this.author = author;
 	}
 	
 	public String getId() {
@@ -33,6 +35,14 @@ public class Book {
 	
 	public String getAsciiTitle() {
 		return asciiTitle;
+	}
+
+	public Author getAuthor() {
+		return author;
+	}
+
+	public void setAuthor(Author author) {
+		this.author = author;
 	}
 	
 }
