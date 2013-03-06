@@ -18,9 +18,13 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -52,6 +56,8 @@ public class BookDownloaderGUI extends JFrame {
 	private JButton showButton;
 	private JButton downloadButton;
 	private JButton downloadAllButton;
+	
+	private JMenuBar menuBar;
 
 	public BookDownloaderGUI() {
 		setTitle("Book Downloader");
@@ -63,10 +69,45 @@ public class BookDownloaderGUI extends JFrame {
 			downloadDir.mkdir();
 		}
 		
+		menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+		
+		JMenu programMenu = new JMenu("Опции");
+		JMenuItem preferencesMenuItem = new JMenuItem("Настройки");
+		preferencesMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFrame preferences = new JFrame("Настройки");
+				preferences.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+				preferences.setLayout(new FlowLayout(FlowLayout.LEFT));
+				preferences.add(new JLabel("Папка для загрузок: "));
+				final JTextField path = new JTextField(downloadDir.getPath(), 20);
+				JButton browseButton = new JButton("Изменить");
+				browseButton.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						JFileChooser fc = new JFileChooser(downloadDir);
+						fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+						fc.setApproveButtonText("OK");
+						if (fc.showSaveDialog(BookDownloaderGUI.this) == JFileChooser.APPROVE_OPTION) {
+							downloadDir = fc.getSelectedFile();
+							path.setText(downloadDir.getAbsolutePath());
+						}
+					}
+				});
+				preferences.add(path);
+				preferences.add(browseButton);
+				preferences.pack();
+				preferences.setLocationRelativeTo(BookDownloaderGUI.this);
+				preferences.setVisible(true);
+			}
+		});
+		programMenu.add(preferencesMenuItem);
+		menuBar.add(programMenu);
+		
 		logger = new JTextArea(3, 35);
 		logger.setFont(new Font("Monospaced", Font.PLAIN, 11));
 		logger.setEditable(false);
 		logger.setMargin(new Insets(2, 5, 2, 5));
+		logger.setBackground(this.getBackground());
 		DefaultCaret caret = (DefaultCaret) logger.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
@@ -189,14 +230,12 @@ public class BookDownloaderGUI extends JFrame {
 		// content panel
 		JPanel content = new JPanel();
 		content.setLayout(new BorderLayout());
-		content.setSize(new Dimension(700, 500));
 		content.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		content.add(topPanel, BorderLayout.NORTH);
 		content.add(centerPanel, BorderLayout.CENTER);
 		content.add(downPanel, BorderLayout.SOUTH);
 
 		add(content, BorderLayout.CENTER);
-		// setLocationRelativeTo(null);
 		pack();
 	}
 
@@ -220,10 +259,11 @@ public class BookDownloaderGUI extends JFrame {
 					for (Author author : authors) {
 						authorListModel.addElement(author.getName());
 					}
+				} catch (Exception e) {
+					logger.append("Проблемы с подключением к серверу. Попробуйте еще раз");
+				} finally {
 					setCursor(null);
 					findButton.setEnabled(true);
-				} catch (Exception e) {
-					logger.append("*error: " + e.getMessage());
 				}
 			};
 
@@ -246,10 +286,11 @@ public class BookDownloaderGUI extends JFrame {
 						booksListModel.addElement(book.getTitle());
 					}
 				} catch (Exception e) {
-					logger.append("*error: " + e.getMessage());
+					logger.append("Проблемы с подключением к серверу. Попробуйте еще раз");
+				} finally {
+					setCursor(null);
+					showButton.setEnabled(true);
 				}
-				setCursor(null);
-				showButton.setEnabled(true);
 			};
 
 		}.execute();
@@ -272,6 +313,7 @@ public class BookDownloaderGUI extends JFrame {
 			protected void done() {
 				downloadButton.setEnabled(true);
 				downloadAllButton.setEnabled(true);
+				logger.append("Загрузка завершена!\n");
 			};
 
 		}.execute();
