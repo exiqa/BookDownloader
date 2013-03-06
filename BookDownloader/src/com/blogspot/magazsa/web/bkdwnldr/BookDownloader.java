@@ -4,7 +4,10 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,35 +33,31 @@ public class BookDownloader {
 	private static final String PATH = "http://www.many-books.org";
 	private static final String DOWNLOAD_PATH = PATH + "/download/";
 
-	private String downloadsDirPath = "Downloads/";
-
 	private static final int TIMEOUT = 5000; // 5 seconds
+	
+	private String downloadDirPath = "./Downloads";
 
-	public BookDownloader() throws IOException {
-		File downloadsDir = new File("./" + downloadsDirPath);
-		if (!downloadsDir.exists()) {
-			downloadsDir.mkdir();
-		}
+	public BookDownloader() {
 	}
 
 	/**
 	 * Downloads and saves book from remote url
+	 * @param authorDir 
 	 * 
 	 * @param book
-	 *            - book to be downloaded
+	 *            - book to be download
 	 */
-	public void download(Book book) {
+	public void download(File authorDir, Book book) {
 		BufferedInputStream in = null;
 		FileOutputStream out = null;
 		URL url;
 		try {
 			url = new URL(DOWNLOAD_PATH + book.getId());
 			in = new BufferedInputStream(url.openStream());
-			out = new FileOutputStream(new File(downloadsDirPath
-					+ book.getAsciiTitle() + ".zip"));
-			byte[] buffer = new byte[1024];
+			out = new FileOutputStream(new File(authorDir, book.getAsciiTitle() + ".zip"));
+			byte[] buffer = new byte[10240];
 			int count = 0;
-			while ((count = in.read(buffer, 0, 1024)) != -1) {
+			while ((count = in.read(buffer, 0, 10240)) != -1) {
 				out.write(buffer, 0, count);
 			}
 		} catch (IOException e) {
@@ -80,15 +79,13 @@ public class BookDownloader {
 			}
 		}
 	}
-
-	/**
-	 * Sets the directory to store downloaded books
-	 * 
-	 * @param downloadsDirPath
-	 *            - directory name
-	 */
-	public void setDownloadsDirPath(String downloadsDirPath) {
-		this.downloadsDirPath = downloadsDirPath;
+	
+	public void download2(File authorDir, Book book) throws MalformedURLException, IOException {
+		URL url = new URL(DOWNLOAD_PATH + book.getId());
+		ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+		FileOutputStream fos = new FileOutputStream(new File(authorDir, book.getAsciiTitle() + ".zip"));
+		fos.getChannel().transferFrom(rbc, 0, 1 << 24);
+		fos.close();
 	}
 
 	/**
@@ -116,12 +113,13 @@ public class BookDownloader {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns a list of authors whose names match the given name
 	 * 
-	 * @param name - given name
-	 * @return - list of found authors  
+	 * @param name
+	 *            - given name
+	 * @return - list of found authors
 	 */
 	public List<Author> getAuthorsByName(String name) {
 		String firstLetterLink = getLinkByFirstLetter(String.valueOf(name
@@ -154,12 +152,13 @@ public class BookDownloader {
 		}
 		return Collections.emptyList();
 	}
-	
+
 	/**
 	 * Returns a list of all the books by given author
 	 * 
-	 * @param author - author, whose books should be found
-	 * @return - list of all found books 
+	 * @param author
+	 *            - author, whose books should be found
+	 * @return - list of all found books
 	 */
 	public List<Book> getBooksByAuthor(Author author) {
 		List<Book> books = new ArrayList<>();
@@ -175,7 +174,7 @@ public class BookDownloader {
 				String[] tokens = link.attr("href").split("/");
 				String id = tokens[4];
 				String asciiTitle = tokens[6];
-				Book book = new Book(id, title, asciiTitle);
+				Book book = new Book(id, title, asciiTitle, author);
 				books.add(book);
 			}
 			return books;
@@ -184,5 +183,13 @@ public class BookDownloader {
 		}
 		return Collections.emptyList();
 	}
-	
+
+	public String getDownloadDirPath() {
+		return downloadDirPath;
+	}
+
+	public void setDownloadDirPath(String downloadDirPath) {
+		this.downloadDirPath = downloadDirPath;
+	}
+
 }
