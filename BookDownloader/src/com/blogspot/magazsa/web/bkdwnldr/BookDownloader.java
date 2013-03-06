@@ -4,10 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -55,9 +52,9 @@ public class BookDownloader {
 			url = new URL(DOWNLOAD_PATH + book.getId());
 			in = new BufferedInputStream(url.openStream());
 			out = new FileOutputStream(new File(authorDir, book.getAsciiTitle() + ".zip"));
-			byte[] buffer = new byte[10240];
+			byte[] buffer = new byte[1024];
 			int count = 0;
-			while ((count = in.read(buffer, 0, 10240)) != -1) {
+			while ((count = in.read(buffer, 0, 1024)) != -1) {
 				out.write(buffer, 0, count);
 			}
 		} catch (IOException e) {
@@ -78,14 +75,6 @@ public class BookDownloader {
 				}
 			}
 		}
-	}
-	
-	public void download2(File authorDir, Book book) throws MalformedURLException, IOException {
-		URL url = new URL(DOWNLOAD_PATH + book.getId());
-		ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-		FileOutputStream fos = new FileOutputStream(new File(authorDir, book.getAsciiTitle() + ".zip"));
-		fos.getChannel().transferFrom(rbc, 0, 1 << 24);
-		fos.close();
 	}
 
 	/**

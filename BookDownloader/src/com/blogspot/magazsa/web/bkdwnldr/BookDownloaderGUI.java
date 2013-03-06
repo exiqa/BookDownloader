@@ -101,7 +101,7 @@ public class BookDownloaderGUI extends JFrame {
 		// top panel
 		JPanel topPanel = new JPanel();
 		topPanel.setLayout(new BorderLayout());
-		topPanel.setBorder(BorderFactory.createEmptyBorder(5, 4, 0, 4));
+		topPanel.setBorder(BorderFactory.createEmptyBorder(5, 4, 5, 4));
 		topPanel.add(new JLabel("Поиск по автору: "), BorderLayout.WEST);
 
 		// down panel
